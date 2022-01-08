@@ -1,0 +1,63 @@
+/* Query 1 */
+SELECT G.name GENRE_NAME , count(*) GENRE_NUM
+	FROM Track T
+	JOIN Genre G
+	ON G.GenreId = T.GenreId
+GROUP BY 1
+ORDER BY 2 DESC ; 
+
+/* Query 2 */
+SELECT COUNTRY_GENRE.COUNTRY , COUNTRY_GENRE.GENRE_NAME , COUNTRY_GENRE.GENRE_ID , COUNTRY_GENRE.Purchases
+	FROM (SELECT  COUNTRY, max(Purchases) Purchases
+		FROM (SELECT C.Country COUNTRY ,G.GenreId GENRE_ID , G.Name GENRE_NAME , count(*)  Purchases
+			FROM Customer C
+			JOIN Invoice I
+			ON C.CustomerId = I.CustomerId
+			JOIN InvoiceLine IL
+			ON I.InvoiceId = IL.InvoiceId
+			JOIN Track T
+			ON IL.TrackId = T.TrackId
+			JOIN Genre  G
+			ON T.GenreId = G.GenreId
+			GROUP BY 1,2,3 )COUNTRY_GENRE
+		GROUP BY COUNTRY
+		HAVING max(Purchases)) MAX_GENRE
+	JOIN (SELECT C.Country COUNTRY ,G.GenreId GENRE_ID , G.Name GENRE_NAME , count(*)  Purchases
+		FROM Customer C
+		JOIN Invoice I
+		ON C.CustomerId = I.CustomerId
+		JOIN InvoiceLine IL
+		ON I.InvoiceId = IL.InvoiceId
+		JOIN Track T
+		ON IL.TrackId = T.TrackId
+		JOIN Genre  G
+		ON T.GenreId = G.GenreId
+		GROUP BY 1,2,3 )COUNTRY_GENRE
+	ON COUNTRY_GENRE.COUNTRY = MAX_GENRE.COUNTRY AND COUNTRY_GENRE.Purchases = MAX_GENRE.Purchases ;
+
+/* Query 3 */
+ SELECT A.ArtistId , A.Name ARTIST_NAME , count(t.TrackId) SONGS
+	FROM Artist A
+	JOIN Album AL
+	ON A.ArtistId = AL.ArtistId
+	JOIN TRACK T
+	ON AL.AlbumId = T.AlbumId
+	JOIN Genre G
+	ON G.GenreId = T.GenreId
+WHERE G.Name = "Rock"
+GROUP BY 1,2
+ORDER BY 3 DESC
+LIMIT 10 ;
+
+
+/* Query 4 */
+
+SELECT STRFTIME('%Y', InvoiceDate) INVOICE_DATE,CASE WHEN G.NAME = "Rock" THEN "Rock" ELSE "NOT Rock" END AS ROCK_OR_NOT , sum(IL.UnitPrice * IL.Quantity) AS TOTAL_SALES
+	FROM Genre G
+	JOIN Track T
+	ON G.GenreId = T.GenreId
+	JOIN InvoiceLine IL
+	ON T.TrackId = IL.TrackId
+	JOIN Invoice I
+	ON I.InvoiceId = IL.InvoiceId
+	GROUP BY 2,1 ;
